@@ -314,34 +314,48 @@ public class MediaScanner implements Handler.Callback {
 	 *
 	 * @param visible if true, the notification is visible (and will get updated)
 	 */
-	private void updateNotification(boolean visible) {
-		MediaLibrary.ScanProgress progress = describeScanProgress();
 
-		if (visible) {
-			// We there are 5 drawables, pick one based on the 'uptime-seconds'.
-			int tick = (int)(SystemClock.uptimeMillis() / 1000) % 5;
-			int icon = R.drawable.status_scan_0 + tick;
-			String title = mContext.getResources().getString(R.string.media_library_scan_running);
-			String content = progress.lastFile;
-			Notification notification = mNotificationHelper.getNewBuilder(mContext)
-				.setProgress(progress.total, progress.seen, false)
-				.setContentTitle(title)
-				.setContentText(content)
-				.setSmallIcon(icon)
-				.setOngoing(true)
-				.getNotification(); // build() is API 16 :-/
-			mNotificationHelper.notify(NOTIFICATION_ID, notification);
+	#THE BEGINNING OF MY FORK CODE
+	
+private void updateNotification(boolean visible) {
+    MediaLibrary.ScanProgress progress = describeScanProgress();
 
-			if (!mWakeLock.isHeld())
-				mWakeLock.acquire();
-		} else {
-			mNotificationHelper.cancel(NOTIFICATION_ID);
+    if (visible) {
+        // We there are 5 drawables, pick one based on the 'uptime-seconds'.
+        int tick = (int)(SystemClock.uptimeMillis() / 1000) % 5;
+        int icon = R.drawable.status_scan_0 + tick;
+        String title = mContext.getResources().getString(R.string.media_library_scan_running);
+        String content = progress.lastFile;
 
-			if (mWakeLock.isHeld())
-				mWakeLock.release();
-		}
-	}
+        // Creating Intent to jump for 10 seconds
+        Intent jumpForwardIntent = new Intent(this, NotificationReceiver.class);
+        jumpForwardIntent.setAction("ACTION_JUMP_FORWARD");
+        PendingIntent jumpForwardPendingIntent = PendingIntent.getBroadcast(this, 0, jumpForwardIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        // Creating a notification with a button to jump to
+        Notification notification = mNotificationHelper.getNewBuilder(mContext)
+            .setProgress(progress.total, progress.seen, false)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setSmallIcon(icon)
+            .setOngoing(true)
+            .addAction(new NotificationCompat.Action(R.drawable.ic_forward, "Jump Forward 10s", jumpForwardPendingIntent)) // Добавление кнопки
+            .getNotification(); // build() is API 16 :-/
+        
+        mNotificationHelper.notify(NOTIFICATION_ID, notification);
+
+        if (!mWakeLock.isHeld())
+            mWakeLock.acquire();
+    } else {
+        mNotificationHelper.cancel(NOTIFICATION_ID);
+
+        if (mWakeLock.isHeld())
+            mWakeLock.release();
+    }
+}
+
+	#THE END OF MY FORK CODE
+	
 	/**
 	 * Checks the state of the native media db to deceide if we are going to
 	 * check for deleted or new/modified items
