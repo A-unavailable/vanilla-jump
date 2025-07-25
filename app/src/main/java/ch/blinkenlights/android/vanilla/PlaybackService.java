@@ -605,6 +605,23 @@ public final class PlaybackService extends Service
 		return START_NOT_STICKY;
 	}
 
+	#MY FORK CODE
+
+	public void jumpForward() {
+        if (mediaPlayer != null) {
+            int currentPosition = mediaPlayer.getCurrentPosition();
+            int newPosition = currentPosition + 10000; // Jump forward 10 seconds
+            int duration = mediaPlayer.getDuration();
+            if (newPosition > duration) {
+                newPosition = duration; // Don't exceed the track duration
+            }
+            mediaPlayer.seekTo(newPosition);
+        }
+    }
+}
+
+#THE END OF MY FORK CODE
+	
 	@Override
 	public void onDestroy()
 	{
